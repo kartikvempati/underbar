@@ -188,12 +188,45 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+    if (iterator == undefined){
+      iterator = function(val) {
+        return val == true;
+      };
+    }
+    return _.reduce(collection, function(match, item){
+      if(!match) {
+        return false;
+      }
+      return Boolean(iterator(item));
+    },true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    if (iterator == undefined){
+      iterator = function(val) {
+        return val == true;
+      };
+    }
+    return !_.every(collection, function(item){
+      return !Boolean(iterator(item));
+    });
+
+    // The more intuitive way:
+    // if (iterator == undefined){
+    //   iterator = function(val) {
+    //     return val == true;
+    //   };
+    // }
+    // return _.reduce(collection, function(match, item){
+    //   if(match) {
+    //     return true;
+    //   }
+    //   return Boolean(iterator(item));
+    // },false);
+
   };
 
 
@@ -216,11 +249,25 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    for (var i =1; i < arguments.length; i++){
+      for (var key in arguments[i]){
+        obj[key] = arguments[i][key];
+      }
+    }
+    return arguments[0];
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    for (var i =1; i < arguments.length; i++){
+      for (var key in arguments[i]){
+        if (obj[key] == undefined){
+          obj[key] = arguments[i][key];
+        }
+      }
+    }
+    return arguments[0];
   };
 
 
@@ -264,6 +311,15 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    var obj = {};
+    return function (){
+      var arg = Array.prototype.slice.call(arguments); // Copy array-like object arguments into an array arg to be used as key in obj to store results.
+      if (arg in obj){
+        return obj[arg];
+      }
+      obj[arg] = func.apply(this, arguments);
+      return obj[arg];
+    }
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -273,6 +329,13 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    var args=[];
+    for (var i = 2; i < arguments.length; i++){
+      args.push(arguments[i]);
+    }
+    setTimeout(function(){
+      func.apply(this, args);
+    }, wait);
   };
 
 
@@ -287,6 +350,34 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    var shuffle = array.slice();
+    var temp;
+    // function to check whether the contents of two arrays are equal
+    var equalArr = function(arr1,arr2) {
+      if (arr1.length != arr2.length){
+        return false;
+      }
+      for (var i = 0; i < arr1.length; i++){
+        if(arr1[i] != arr2[i]){
+          return false;
+        }
+      }
+      return true;
+    };
+    /* 
+    For smaller arrays, the array is occasionally shuffled back into its original order.
+    The equalArr method is check after every shuffle to make sure the array is not returned
+    in the same order as the argument array. 
+    */
+    while (equalArr(array, shuffle)){
+      for(var i = 0; i < shuffle.length; i++){
+        var rand_index = Math.floor(Math.random()*shuffle.length);
+        temp = shuffle[i];
+        shuffle[i] = shuffle[rand_index];
+        shuffle[rand_index] = temp;
+      }
+    }
+    return shuffle;
   };
 
 
